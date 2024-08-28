@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useContext } from "react";
 import { Button, Form, Input, Divider } from "antd";
 import { useNavigate } from "react-router-dom";
-import heroImage from "./heroo.jpg";
+import heroImage from "../../assets/heroo.jpg";
+import { UserContext } from "../../context/user/userContext";
 
 import * as Styled from "./Login.styled";
 export const Login = () => {
@@ -13,6 +14,7 @@ export const Login = () => {
   const navigateTo = useNavigate();
 
   const NON_EMPTY_STRING_REGEX = new RegExp(/^(?!\s*$).+/);
+  const { getUser } = useContext(UserContext);
 
   const handleSubmit = async () => {
     try {
@@ -39,6 +41,7 @@ export const Login = () => {
         // console.log(res.authToken, "authtoken");
         // Save the auth token and redirect
         localStorage.setItem("token", res.authToken);
+        getUser();
         navigateTo("/");
       } else {
         alert("Invalid credentials");

@@ -1,11 +1,12 @@
-import React from "react";
-import { BrowserRouter as Router, Link, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { Layout } from "antd";
-import { Login } from "./components/Login";
-import { Profile } from "./components/Profile";
+import { Login } from "./components/Login/Login";
+import { Profile } from "./components/Profile/Profile";
+import { UserProvider } from "./context/user/userContext";
+import { ProfileProvider } from "./context/profilepictures/profileContext";
+import ProtectedRoute from "./components/ProtectedRoute/ProtectedRoute";
 
 import "./App.css";
-import { Signup } from "./components/Signup";
 
 const layoutStyle = {
   fontFamily: "DM Sans , sans-serif",
@@ -13,15 +14,25 @@ const layoutStyle = {
 
 function App() {
   return (
-    <Layout style={layoutStyle}>
-      <Router>
-        <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route path="/" element={<Profile />} />
-          <Route path="/signup" element={<Signup />} />
-        </Routes>
-      </Router>
-    </Layout>
+    <UserProvider>
+      <ProfileProvider>
+        <Layout style={layoutStyle}>
+          <Router>
+            <Routes>
+              <Route path="/login" element={<Login />} />
+              <Route
+                path="/"
+                element={
+                  <ProtectedRoute>
+                    <Profile />
+                  </ProtectedRoute>
+                }
+              />
+            </Routes>
+          </Router>
+        </Layout>
+      </ProfileProvider>
+    </UserProvider>
   );
 }
 

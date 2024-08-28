@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import logo from "../assets/logo.png";
 import { Layout } from "antd";
 
@@ -7,11 +7,17 @@ const { Header } = Layout;
 export const Navbar = () => {
   const headerStyle = {
     textAlign: "center",
-    color: "#fff",
+    color: "#000",
     height: 64,
     paddingInline: 48,
     lineHeight: "64px",
-    backgroundColor: "#4096ff",
+    backgroundColor: "#fff",
+  };
+
+  const navigate = useNavigate();
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    navigate("/login");
   };
   return (
     <Header style={headerStyle}>
@@ -46,7 +52,7 @@ export const Navbar = () => {
             to="/"
             style={{
               textDecoration: "none",
-              color: "white",
+              color: "#000",
             }}
           >
             User Profile Manager
@@ -56,10 +62,11 @@ export const Navbar = () => {
         <div
           style={{
             textDecoration: "none",
-            color: "white",
+            color: "#000",
             marginLeft: "0px",
             cursor: "pointer",
           }}
+          onClick={handleLogout}
         >
           Logout
         </div>
