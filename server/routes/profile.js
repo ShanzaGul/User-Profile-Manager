@@ -8,8 +8,6 @@ const { body, validationResult } = require("express-validator");
 router.get("/fetchAllProfilePictures", fetchuser, async (req, res) => {
   try {
     const profilePictures = await ProfilePicture.find({ userId: req.user.id });
-    console.log(req.user.id, "req.user.id");
-    console.log(profilePictures, "profilePictures");
     res.json(profilePictures);
   } catch (error) {
     console.error(error.message);
