@@ -3,9 +3,30 @@ const router = express.Router();
 const User = require("../models/User");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const { Storage } = require("@google-cloud/storage");
+const Multer = require("multer");
+const ProfilePicture = require("../models/ProfilePictures");
+const path = require("path");
+
+let projectId = "";
+let keyFilename = "";
+
+let storage = new Storage({
+  projectId,
+  keyFilename,
+});
+
+const multer = Multer({
+  storage: Multer.memoryStorage(),
+  limits: {
+    fileSize: 5 * 1024 * 1024,
+  },
+});
+
+const bucket = storage.bucket("");
 
 const { body, validationResult } = require("express-validator");
-const jwt_secret = "jwt36rtbc7nxyx73d83fydnmxhwuecef72g[";
+const jwt_secret = "";
 
 const fetchUser = require("../middleware/fetchusers");
 
@@ -121,7 +142,7 @@ router.post("/getUser", fetchUser, async (req, res) => {
     const userId = req.user.id;
     console.log(userId, "userId");
     const user = await User.findById(userId).select("-passwordHash");
-    res.send(user);
+    res.json({ user });
   } catch (error) {
     console.log(error);
     res.status(500).send("Internal Server Error");
@@ -159,6 +180,65 @@ router.put(
         { new: true }
       );
       res.json({ user });
+    } catch (error) {
+      console.log(error);
+      res.status(500).send("Internal Server Error");
+    }
+  }
+);
+
+// upload profile picture using: POST "/api/auth/upload". Login required
+
+router.post(
+  "/upload",
+  fetchUser,
+  multer.single("imgFile"),
+  async (req, res) => {
+    console.log("Hurrah I here");
+    try {
+      const userId = req.user.id;
+      const user = await User.findById(userId).select("-passwordHash");
+      if (!user) {
+        return res.status(404).json({ error: "User Not Found" });
+      }
+
+      if (!req.file) {
+        return res.status(400).json({ error: "Please upload a file" });
+      }
+      // Extract the file extension from the original file name
+      const fileExtension = path.extname(req.file.originalname);
+
+      // Create a new file name using user ID and original file name
+      const newFileName = `${userId}_${Date.now()}_${path.basename(
+        req.file.originalname,
+        fileExtension
+      )}${fileExtension}`;
+
+      const fileInBucket = bucket.file(newFileName);
+      const uploadStream = fileInBucket.createWriteStream({
+        resumable: false,
+      });
+
+      uploadStream.on("error", (err) => {
+        console.log(err);
+        res.status(500).send("Internal Server Error");
+      });
+
+      uploadStream.on("finish", async () => {
+        const publicUrl = `https://storage.googleapis.com/${bucket.name}/${fileInBucket.name}`;
+        user.currentProfilePicture = publicUrl;
+        await user.save();
+        // Also add this in the ProfilePicture model
+        const profilePicture = new ProfilePicture({
+          imageUrl: publicUrl,
+          userId,
+        });
+        await profilePicture.save();
+
+        res.json({ publicUrl });
+      });
+
+      uploadStream.end(req.file.buffer);
     } catch (error) {
       console.log(error);
       res.status(500).send("Internal Server Error");
